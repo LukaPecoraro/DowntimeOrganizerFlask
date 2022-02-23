@@ -1,7 +1,7 @@
 import requests
 from flask import Flask, render_template, request
 
-from forms import CaesarShift, TemperatureConversion, MovieSearch, MusicSearch
+from forms import MovieSearch, MusicSearch, BookSearch
 
 app=Flask(__name__)
 app.config["SECRET_KEY"] = "secret-keyy"
@@ -15,7 +15,7 @@ def home():
 
 
 @app.route("/movies", methods=["GET", "POST"])
-def seaarchMovie():
+def searchMovies():
     #list of found search results
     listMovies = []
 
@@ -51,6 +51,32 @@ def searchMusic():
         print(trackList[0])
             
     return render_template("musicSelection.html", form=form, trackList=trackList)
+
+
+@app.route("/books", methods=["GET", "POST"])
+def searchBooks():
+    #list of found search results
+    resList = []
+    form = BookSearch()
+
+    if form.validate_on_submit():
+        url='https://www.googleapis.com/books/v1/volumes?'
+        searchString = form.searchString.data
+        paramDict = {"q":searchString, "maxResults":16}
+        req = requests.get(url, params=paramDict)
+        resList = req.json()["items"]
+
+        #fix missing images, crop description, missing author
+        for book in resList:
+            if "imageLinks" not in book["volumeInfo"]:
+                book["volumeInfo"]["imageLinks"] = {"thumbnail" : "https://image.shutterstock.com/image-photo/brown-leather-book-cover-600w-169578584.jpg"}
+            if "description" in book["volumeInfo"]:
+                if len(book["volumeInfo"]["description"]) > 500:
+                    book["volumeInfo"]["description"] = book["volumeInfo"]["description"][:500] + "..."
+            if "authors" not in book["volumeInfo"]:
+                book["volumeInfo"]["authors"] = ["missing_author"]
+
+    return render_template("bookSelection.html", form=form, bookList=resList)
 
 
 @app.route("/shift", methods=["GET", "POST"])

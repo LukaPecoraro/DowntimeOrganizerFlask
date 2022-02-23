@@ -5,7 +5,7 @@
         <div class="mb-3">
             {{ form.hidden_tag() }}
             <label for="movieSearch" class="form-label">Search for movie</label>
-            {{ form.movieTitle(class="form-control") }}
+            {{ form.searchString(class="form-control") }}
             {{ form.submit(class="btn btn-primary") }}
         </div>
     </form>
@@ -13,17 +13,17 @@
 
 <div class="container-md">
 <div class="row row-cols-1 row-cols-md-4 g-4">
-    {% for movie in listMovies %}
+    {% for book in bookList %}
     <div class="col">
         <div class="card h-100">
-            <img src="https://image.tmdb.org/t/p/w200/{{ movie.poster_path }}" class="card-img-top" alt="...">
+            <img src='{{ book.volumeInfo.imageLinks.thumbnail }}' class="card-img-top" alt="...">
             <div class="card-body">
-                <h5 class="card-title">{{ movie.original_title }} </h5>
-                <h6 class="card-subtitle mb-2 text-muted">Release date: {{ movie.release_date }}</h6>
+                <h5 class="card-title">{{  book.volumeInfo.title }} </h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ book.volumeInfo.authors[0] }} - {{ book.volumeInfo.publishedDate }}</h6>
                 <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
-                <p class="card-text">{{ movie.overview }}</p>
+                <p class="card-text">{{ book.volumeInfo.description }} </p>
             </div>
-            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ movie.vote_average }}</small> </div>
+            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ book.volumeInfo.averageRating }}</small> </div>
             
         </div>
     </div>
@@ -33,4 +33,3 @@
 
 <br>
 {% endblock %}
-

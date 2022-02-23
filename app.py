@@ -34,19 +34,23 @@ def seaarchMovie():
             
     return render_template("movieSelection.html", form=form, listMovies=listMovies)
 
-# @app.route("/movies", methods=["GET", "POST"])
-# def searchMusic():
-#     #list of found search results
-#     listMovies = []
-#     form = MusicSearch()
+@app.route("/music", methods=["GET", "POST"])
+def searchMusic():
+    #list of found search results
+    trackList = []
+    form = MusicSearch()
 
-#     if form.validate_on_submit():
-#         url="https://api.deezer.com/search"
-#         searchString = "abraxas"
-#         paramDict = {"q":searchString}
-#         req = requests.get(url, params=paramDict)
+    if form.validate_on_submit():
+        url="https://api.deezer.com/search"
+        searchString = form.searchString.data
+        paramDict = {"q":searchString}
+        req = requests.get(url, params=paramDict)
+
+        trackList = req.json().get("data")
+
+        print(trackList[0])
             
-#     return render_template("movieSelection.html", form=form, listMovies=listMovies)
+    return render_template("musicSelection.html", form=form, trackList=trackList)
 
 
 @app.route("/shift", methods=["GET", "POST"])

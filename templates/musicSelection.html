@@ -4,7 +4,7 @@
     <form action="" method="POST" novalidate>
         <div class="mb-3">
             {{ form.hidden_tag() }}
-            <label for="movieSearch" class="form-label">Movie title</label>
+            <label for="movieSearch" class="form-label">Search for a song</label>
             {{ form.searchString(class="form-control") }}
             {{ form.submit(class="btn btn-primary") }}
         </div>
@@ -23,8 +23,9 @@
             <div class="card-body">
                 <h5 class="card-title">{{ track.title }} </h5>
                 <h6 class="card-subtitle mb-2 text-muted">{{ track.artist.name }} - {{ track.album.title }}</h6>
-                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
+                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add music"></a>
             </div>
+            <div class="card-footer"><audio class="w-75 p-3" controls src="{{ track.preview }}" > </audio></div>
         </div>
     </div>
     {% endfor %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block main_contetnt %}
+
+    <form action="" method="POST" novalidate>
+        <div class="mb-3">
+            {{ form.hidden_tag() }}
+            <label for="movieSearch" class="form-label">Movie title</label>
+            {{ form.movieTitle(class="form-control") }}
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <!-- <p>
+        <a href="{{ url_for('cipher') }}">Go to shift</a>
+    </p> -->
+<!-- <div class="card-group"> -->
+<div class="container-md">
+<div class="row row-cols-1 row-cols-md-4 g-4">
+    {% for movie in listMovies %}
+    <div class="col">
+        <div class="card h-100">
+            <img src="https://image.tmdb.org/t/p/w200/{{ movie.poster_path }}" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.original_title }} </h5>
+                <h6 class="card-subtitle mb-2 text-muted">Release date: {{ movie.release_date }}</h6>
+                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
+                <p class="card-text">{{ movie.overview }}</p>
+            </div>
+            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ movie.vote_average }}</small> </div>
+            
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+
+<br>
+{% endblock %}
+

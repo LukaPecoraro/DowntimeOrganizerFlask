@@ -1,0 +1,21 @@
+form {
+    border: 1px solid blue;
+    padding: 2em;
+    margin: 2em auto;
+}
+    
+label {
+    float: left;
+    width: 5em;
+    text-align: right;
+    clear: left;
+    margin-right: 1em;
+}
+    
+input[type="text"] {
+    margin-bottom: 1em;
+}
+    
+img {
+    display: block;
+}

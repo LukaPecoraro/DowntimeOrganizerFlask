@@ -1,7 +1,10 @@
 import requests
 from flask import Flask, render_template, request
-
 from forms import MovieSearch, MusicSearch, BookSearch
+
+from database import get_db, close_db
+from entities import Movie, Song, Book, DatabaseManager
+
 
 app=Flask(__name__)
 app.config["SECRET_KEY"] = "secret-keyy"
@@ -77,6 +80,21 @@ def searchBooks():
                 book["volumeInfo"]["authors"] = ["missing_author"]
 
     return render_template("bookSelection.html", form=form, bookList=resList)
+
+
+#save movies to database
+@app.route("/addMovie/<movieId>")
+def addMovie(movieId):
+    url = f"https://api.themoviedb.org/3/movie/{movieId}"
+    paramDict = {"api_key": TMDB_APIEKY, "language":"en-US"}
+    movieReq = requests.get(url, params=paramDict).json()
+
+    #make object
+    movie = Movie()
+
+    DatabaseManager.add_movie(movie, userId=1)
+
+    return 0
 
 
 @app.route("/shift", methods=["GET", "POST"])

@@ -1,9 +1,11 @@
+from matplotlib.style import use
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request, url_for
 from forms import MovieSearch, MusicSearch, BookSearch
 
 from database import get_db, close_db
-from entities import Movie, Song, Book, DatabaseManager
+from entities import Movie, Song, Book, fixMissingBook, json2Book, json2Movie, json2Song
+import databaseManager as dbm #here we store the functions for inserting and deleting
 
 
 app=Flask(__name__)
@@ -34,6 +36,8 @@ def searchMovies():
         
         #convert response into list of movies - dictionaries
         listMovies = req.json().get("results")
+
+        listMovies = [json2Movie(r) for r in listMovies]
             
     return render_template("movieSelection.html", form=form, listMovies=listMovies)
 
@@ -51,7 +55,7 @@ def searchMusic():
 
         trackList = req.json().get("data")
 
-        print(trackList[0])
+        trackList = [json2Song(r) for r in trackList]
             
     return render_template("musicSelection.html", form=form, trackList=trackList)
 
@@ -69,83 +73,73 @@ def searchBooks():
         req = requests.get(url, params=paramDict)
         resList = req.json()["items"]
 
-        #fix missing images, crop description, missing author
-        for book in resList:
-            if "imageLinks" not in book["volumeInfo"]:
-                book["volumeInfo"]["imageLinks"] = {"thumbnail" : "https://image.shutterstock.com/image-photo/brown-leather-book-cover-600w-169578584.jpg"}
-            if "description" in book["volumeInfo"]:
-                if len(book["volumeInfo"]["description"]) > 500:
-                    book["volumeInfo"]["description"] = book["volumeInfo"]["description"][:500] + "..."
-            if "authors" not in book["volumeInfo"]:
-                book["volumeInfo"]["authors"] = ["missing_author"]
+        resList = [json2Book(r) for r in resList]
 
     return render_template("bookSelection.html", form=form, bookList=resList)
 
 
 #save movies to database
-@app.route("/addMovie/<movieId>")
-def addMovie(movieId):
+@app.route("/addMovie/<movieId>", methods=["GET", "POST"])
+def addMovie(movieId, userId=1):
     url = f"https://api.themoviedb.org/3/movie/{movieId}"
     paramDict = {"api_key": TMDB_APIEKY, "language":"en-US"}
     movieReq = requests.get(url, params=paramDict).json()
 
     #make object
-    movie = Movie()
-
-    DatabaseManager.add_movie(movie, userId=1)
-
-    return 0
-
-
-@app.route("/shift", methods=["GET", "POST"])
-def cipher():
-    form = CaesarShift()
-    if form.validate_on_submit():
-        plainText = form.plainText.data
-        shift = form.shift.data
-        form.cipher.data = makeCipher(plainText, shift)
-    return render_template("shift_form.html", form=form)
+    movie = json2Movie(movieReq) #get correct from html
+    print(movie.original_title)
+    dbm.add_movie(movie=movie, userId=userId)
     
-@app.route("/conversion", methods=["GET", "POST"])
-def conversion():
-    form = TemperatureConversion()
-    if form.validate_on_submit():
-        unitFrom = form.unitFrom.data
-        temperature = float(form.temperature.data)
-        unitTo = form.unitTo.data
+    return redirect(url_for("collections"))
 
-        #print(unitFrom, float(temperature)*1.0, unitTo)
-        form.converted.data = convertTemperature(unitFrom, unitTo, temperature)
-    return render_template("conversion_form.html", form=form)
+#delete movie
+@app.route("/removeMovie/<movieId>", methods=["GET", "POST"])
+def removeMovie(movieId, userId=1):
+    dbm.remove_movie(movieId=movieId, userId=userId)
+    return redirect(url_for("collections"))
+
+#save song
+@app.route("/addSong/<songId>", methods=["GET", "POST"])
+def addSong(songId, userId=1):
+    url = f"https://api.deezer.com/track/{songId}"
+    req = requests.get(url).json()
+
+    #make object
+    song = json2Song(req) #get correct from json
+
+    dbm.add_song(song=song, userId=userId)
     
+    return redirect(url_for("collections"))
 
-def convertTemperature(unitFrom, unitTo, temperature):
-    converted = float(temperature)
-    if unitFrom == "Celsius":
-        if unitTo == "Kelvin":
-            converted = temperature + 273
-        elif unitTo == "Fahrenheit":
-            converted = 9/5 * temperature + 32
-    elif unitFrom == "Kelvin":
-        if unitTo == "Celsius":
-            converted = temperature - 273
-        elif unitTo == "Fahrenheit":
-            converted = 9/5 * (temperature - 273) + 32
-    elif unitFrom == "Fahrenheit":
-        if unitTo == "Celsius":
-            converted =5/9 * (temperature - 32)
-        elif unitTo == "Kelvin":
-            converted = 5/9 * (temperature - 32) + 273
+#delete song
+@app.route("/removeSong/<songId>", methods=["GET", "POST"])
+def removeSong(songId, userId=1):
+    dbm.remove_song(songId=songId, userId=userId)
+    return redirect(url_for("collections"))
 
-    return converted
+#ssve book
+@app.route("/addBook/<bookId>", methods=["GET", "POST"])
+def addBook(bookId, userId=1):
+    url=f'https://www.googleapis.com/books/v1/volumes/{bookId}'
+    req = requests.get(url)
+    r = req.json()
 
-def makeCipher(plaintext, shift):
-    ciphertext = ""
-    for char in plaintext:
-        if char.isupper():
-            ciphertext += chr((ord(char) - 65 + shift) % 26 + 65)
-        elif char.islower():
-            ciphertext += chr((ord(char) - 97 + shift) % 26 + 97)
-        else:
-            ciphertext += char
-    return ciphertext
+    #make object
+    book = json2Book(r) #get correct from json
+    dbm.add_book(book=book, userId=userId)
+    
+    return redirect(url_for("collections"))
+
+#delete book
+@app.route("/removeBook/<bookId>", methods=["GET", "POST"])
+def removeBook(bookId, userId=1):
+    dbm.remove_book(bookId=bookId, userId=userId)
+    return redirect(url_for("collections"))
+
+#show the users collection
+@app.route("/collections", methods=["GET", "POST"])
+def collections():
+    listMovies = dbm.get_movies(userId=1)
+    trackList = dbm.get_songs(userId=1)
+    bookList = dbm.get_books(userId=1)
+    return render_template("collections.html", listMovies=listMovies, trackList=trackList, bookList=bookList)

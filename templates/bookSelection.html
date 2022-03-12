@@ -4,7 +4,7 @@
     <form action="" method="POST" novalidate>
         <div class="mb-3">
             {{ form.hidden_tag() }}
-            <label for="movieSearch" class="form-label">Search for movie</label>
+            <label for="movieSearch" class="form-label">Search for a book</label>
             {{ form.searchString(class="form-control") }}
             {{ form.submit(class="btn btn-primary") }}
         </div>
@@ -16,14 +16,14 @@
     {% for book in bookList %}
     <div class="col">
         <div class="card h-100">
-            <img src='{{ book.volumeInfo.imageLinks.thumbnail }}' class="card-img-top" alt="...">
+            <img src='{{ book.thumbnail }}' class="card-img-top" alt="...">
             <div class="card-body">
-                <h5 class="card-title">{{  book.volumeInfo.title }} </h5>
-                <h6 class="card-subtitle mb-2 text-muted">{{ book.volumeInfo.authors[0] }} - {{ book.volumeInfo.publishedDate }}</h6>
-                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
-                <p class="card-text">{{ book.volumeInfo.description }} </p>
+                <h5 class="card-title">{{  book.title }} </h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                <a href="{{ url_for('addBook', bookId=book.bookId) }}" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
+                <p class="card-text">{{ book.description }} </p>
             </div>
-            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ book.volumeInfo.averageRating }}</small> </div>
+            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ book.averageRating }}</small> </div>
             
         </div>
     </div>

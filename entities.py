@@ -34,41 +34,40 @@ class Book:
         self.averageRating=averageRating #book.volumeInfo.averageRating
 
 
+#utils to convert from json to object
+def json2Movie(r):
+    #movieId, original_title, release_date, overview , vote_average, poster_path
+    return Movie(r["id"], r["original_title"], r["release_date"], r["overview"], r["vote_average"], r["poster_path"])
 
+def json2Song(r):
+    #songId, title, artistName, album, cover, preview
+    return Song(r["id"], r["title"],  r["artist"]["name"], r["album"]["title"], r["album"]["cover"], r["preview"])
 
-class DatabaseManager:
-        def __init__(self, dbFile):
-            self.dbfile = dbFile
+def json2Book(r):
+    r=fixMissingBook(r)
+    #bookId, title, author, thumbnail, description, averageRating):
+    print(r)
+    book =  Book(r["id"], r["volumeInfo"]["title"], r["volumeInfo"]["authors"][0], r["volumeInfo"]["imageLinks"]["thumbnail"], r["volumeInfo"]["description"], r["volumeInfo"]["averageRating"])
+    #book = Book(1,2,3,4,5,6)
+    print(book.__dict__)
+    return book
 
-        def add_movie(self, movie, userId):
-            #connect
-            db = get_db()
+#fixes missing values from request
+def fixMissingBook(book):
+    if "imageLinks" not in book["volumeInfo"]:
+        book["volumeInfo"]["imageLinks"] = {"thumbnail" : "https://image.shutterstock.com/image-photo/brown-leather-book-cover-600w-169578584.jpg"}
+    if "description" in book["volumeInfo"]:
+        if len(book["volumeInfo"]["description"]) > 500:
+            book["volumeInfo"]["description"] = book["volumeInfo"]["description"][:500] + "..."
+    else:
+        book["volumeInfo"]["description"] = "*missing description*"
+    if "authors" not in book["volumeInfo"]:
+        book["volumeInfo"]["authors"] = ["missing_author"]
 
-            #check if exists
-            query = """
-                    SELECT *
-                    FROM movies
-                    WHERE (movieId = ? AND userId = ?)    
-                    """
-            exists = db.execute(query, (movie.movieId, userId)).fetchone()
-
-            if exists is not None:
-                er = "user exists"
-            
-            else:
-                query ="""
-                        INSERT INTO movies (userId, movieId, original_title, release_date, overview , vote_average, poster_path)
-                        VALUES (?,?,?,?,?,?,?);
-                        """
-                db.execute(query, (userId, movie.movieId, movie.original_title, movie.release_date, movie.overview , movie.vote_average, movie.poster_path))
-                db.commit()
-                message= "Movie inserted"
-
-            return 0
-
-
-
-
+    if "averageRating" not in book["volumeInfo"]:
+        book["volumeInfo"]["averageRating"] = "/"
+    
+    return book
 
 """ TODO remove this
 {% for book in bookList %}
@@ -101,6 +100,23 @@ class DatabaseManager:
         </div>
     </div>
     {% endfor %}
+
+{% for movie in listMovies %}
+    <div class="col">
+        <div class="card h-100">
+            <img src="https://image.tmdb.org/t/p/w200/{{ movie.poster_path }}" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.original_title }} </h5>
+                <h6 class="card-subtitle mb-2 text-muted">Release date: {{ movie.release_date }}</h6>
+                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
+                <p class="card-text">{{ movie.overview }}</p>
+            </div>
+            <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ movie.vote_average }}</small> </div>
+            
+        </div>
+    </div>
+    {% endfor %}
+
 
 
 """

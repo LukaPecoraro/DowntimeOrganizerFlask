@@ -4,7 +4,7 @@
     <form action="" method="POST" novalidate>
         <div class="mb-3">
             {{ form.hidden_tag() }}
-            <label for="movieSearch" class="form-label">Search for movie</label>
+            <label for="movieSearch" class="form-label">Search for a movie</label>
             {{ form.movieTitle(class="form-control") }}
             {{ form.submit(class="btn btn-primary") }}
         </div>
@@ -20,7 +20,7 @@
             <div class="card-body">
                 <h5 class="card-title">{{ movie.original_title }} </h5>
                 <h6 class="card-subtitle mb-2 text-muted">Release date: {{ movie.release_date }}</h6>
-                <a href="#" class="btn btn-warning"><img src="{{ url_for('static', filename='star-fill.svg') }}" alt="Add movie"></a>
+                <a href="{{ url_for('addMovie', movieId=movie.movieId) }}" class="btn btn-warning"><img src="{{ url_for('static', filename='star.svg') }}" alt="Add movie"></a>
                 <p class="card-text">{{ movie.overview }}</p>
             </div>
             <div class="card-footer"> <small class="text-muted"><b>Rating:</b> {{ movie.vote_average }}</small> </div>

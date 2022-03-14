@@ -1,7 +1,7 @@
 from database import get_db, close_db   
 from entities import Movie, Song, Book
 
-#CRUD operations
+#here we store our functions for CRUD operations
 
 def get_movies(userId):
     db = get_db()

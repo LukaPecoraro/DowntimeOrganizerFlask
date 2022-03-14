@@ -2,7 +2,7 @@
 {% block main_contetnt %}
 
     <form action="" method="POST" novalidate>
-        <div class="mb-3">
+        <div class="mx-auto margin-top" style="width: 35%;">
             {{ form.hidden_tag() }}
             <label for="movieSearch" class="form-label">Search for a book</label>
             {{ form.searchString(class="form-control") }}
@@ -11,7 +11,7 @@
     </form>
 
 
-<div class="container-md">
+<div class="container-md mt-5">
 <div class="row row-cols-1 row-cols-md-4 g-4">
     {% for book in bookList %}
     <div class="col">

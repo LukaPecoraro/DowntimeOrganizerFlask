@@ -7,8 +7,8 @@ CREATE TABLE users
     password TEXT NOT NULL
 );
 
-INSERT INTO users (username, password)
-VALUES ('luka', 'pass');
+-- INSERT INTO users (username, password)
+-- VALUES ('luka', 'pass');
 
 --TODO foreign userid, which user added it
     -- userId INTEGER NOT NULL,

@@ -12,6 +12,14 @@ from database import get_db, close_db
 from entities import Movie, Song, Book, fixMissingBook, json2Book, json2Movie, json2Song
 import databaseManager as dbm #here we store the functions for inserting and deleting
 
+"""
+Downtime organizer
+Search for any movie/song/book, and add it to your collection of stuff you want to do during your downtime, all in one place.
+Instructions: register a new user and login. You will see an empty collection of movies, songs and books. To add stuff click on Movies/Music/Books,
+search for what you want and click the yellow star button. It will now appear in your collection under the appropriate category. 
+When you finished watching the movie, simply remove it from the collection, by clicking the yellow button, with the filled star.
+Alternatively there is some stuff I like already saved under username:admin password:admin
+"""
 
 app=Flask(__name__)
 app.teardown_appcontext(close_db)
@@ -42,7 +50,6 @@ def home():
     return redirect(url_for("login"))
 
 @app.route("/register", methods=["GET", "POST"])
-
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -61,6 +68,8 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if "username" in session: return redirect(url_for("collections")) #skip the login page if the user is logged in
+    
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
@@ -70,13 +79,15 @@ def login():
         exists = db.execute(query, (username,)).fetchone()
         if exists is None:
             form.username.errors.append("username doesnt exist")
+        elif not check_password_hash(exists["password"], password):
+            form.password.errors.append("Wrong password!")
         else:
             session.clear()
             session["username"] = username
             session["userId"] = exists[0]
             print(session["userId"])
             next_page = request.args.get("next")
-
+            #we can redirect to next_page, but collections is cleaner
             return redirect(url_for("collections"))
 
     return render_template("login.html", form=form)
@@ -105,10 +116,12 @@ def searchMovies():
         #convert response into list of movies - dictionaries
         listMovies = req.json().get("results")
 
+        #convert to objects of class Movie
         listMovies = [json2Movie(r) for r in listMovies]
             
     return render_template("movieSelection.html", form=form, listMovies=listMovies)
 
+#search for songs
 @app.route("/music", methods=["GET", "POST"])
 @loginRequired
 def searchMusic():
@@ -128,7 +141,7 @@ def searchMusic():
             
     return render_template("musicSelection.html", form=form, trackList=trackList)
 
-
+#search for books
 @app.route("/books", methods=["GET", "POST"])
 @loginRequired
 def searchBooks():

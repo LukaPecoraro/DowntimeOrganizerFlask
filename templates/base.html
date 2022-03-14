@@ -26,9 +26,19 @@
                     <a class="nav-link" href="{{ url_for('searchBooks') }}">Books</a>
                   </li>
                 </ul>
-                <span class="navbar-text">
-                  Text yay
-                </span>
+
+                
+                  <span class="navbar-text">
+                    {% if g.username %}
+                      {{ g.username }}
+                    {% else %}
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    {% endif %}
+                  </span>
+
+                
+
+                  <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
               </div>
             </div>
           </nav>

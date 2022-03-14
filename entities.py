@@ -3,7 +3,6 @@ from database import get_db, close_db
 
 #this is where we store our classes to keep things organized
 	
-
 class Movie:
     def __init__(self, movieId, original_title, release_date, overview , vote_average, poster_path):
         self.movieId = movieId
@@ -36,6 +35,7 @@ class Book:
 
 #utils to convert from json to object
 def json2Movie(r):
+    fixMissingMovie(r)
     #movieId, original_title, release_date, overview , vote_average, poster_path
     return Movie(r["id"], r["original_title"], r["release_date"], r["overview"], r["vote_average"], r["poster_path"])
 
@@ -46,11 +46,15 @@ def json2Song(r):
 def json2Book(r):
     r=fixMissingBook(r)
     #bookId, title, author, thumbnail, description, averageRating):
-    print(r)
     book =  Book(r["id"], r["volumeInfo"]["title"], r["volumeInfo"]["authors"][0], r["volumeInfo"]["imageLinks"]["thumbnail"], r["volumeInfo"]["description"], r["volumeInfo"]["averageRating"])
     #book = Book(1,2,3,4,5,6)
-    print(book.__dict__)
     return book
+
+def fixMissingMovie(movie):
+    #movieId, original_title, release_date, overview , vote_average, poster_path
+    if "release_date" not in movie:
+        movie["release_date"] = "/"
+
 
 #fixes missing values from request
 def fixMissingBook(book):

@@ -15,7 +15,6 @@ VALUES ('luka', 'pass');
     -- FOREIGN KEY (userId)
     --    REFERENCES users (userId) 
 
-
 --maybe its more correct PRIMARY KEY (movieId, userId)
 -- TODO check SQL best way
 

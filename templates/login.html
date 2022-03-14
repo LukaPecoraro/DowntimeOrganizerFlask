@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block main_contetnt %}
+
+<div class="mx-auto margin-top" style="width: 200px;">
+    <h4>Login:</h4>
+
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        {{ form.username.label }}
+        {{ form.username() }}
+        {% for error in form.username.errors %} 
+            {{ error }}
+        {% endfor %}
+
+        <br>
+        {{ form.password.label }}
+        {{ form.password() }}
+        {% for error in form.password.errors %} 
+            {{ error }}
+        {% endfor %}
+
+        <br>
+        
+
+        {{ form.submit(class="btn btn-primary mt-3", style="width: 100px;") }}
+    </form>
+
+    <a class="btn btn-danger mt-2" style="width: 100px;" href="{{ url_for('register') }}">Register</a>
+
+</div>
+
+{% endblock %}
+

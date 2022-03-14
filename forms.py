@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 
-from wtforms import DecimalField, StringField, IntegerField, SubmitField, RadioField
-from wtforms.validators import InputRequired, NumberRange
+from wtforms import DecimalField, StringField, IntegerField, SubmitField, RadioField, PasswordField
+from wtforms.validators import InputRequired, NumberRange, EqualTo
 
 # class CaesarShift(FlaskForm):
 #     plainText = StringField("Plaintext", validators=[InputRequired()])
@@ -26,7 +26,16 @@ from wtforms.validators import InputRequired, NumberRange
 
 #     converted = DecimalField("Converted")
 #     submit = SubmitField("Convert")
+class LoginForm(FlaskForm):
+    username = StringField("Username:", validators=[InputRequired()]) 
+    password = PasswordField("Password:", validators=[InputRequired()])
+    submit = SubmitField("Login") 
 
+class RegisterForm(FlaskForm):
+    username = StringField("Username:", validators=[InputRequired()]) 
+    password = PasswordField("Password:", validators=[InputRequired()])
+    password2 = PasswordField("Repeat password:", validators=[InputRequired(), EqualTo("password")])
+    submit = SubmitField("Register") 
 
 class MovieSearch(FlaskForm):
     movieTitle = StringField("Movie title:", validators=[InputRequired()])

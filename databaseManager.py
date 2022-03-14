@@ -1,6 +1,8 @@
 from database import get_db, close_db   
 from entities import Movie, Song, Book
 
+#CRUD operations
+
 def get_movies(userId):
     db = get_db()
 
@@ -12,7 +14,6 @@ def get_movies(userId):
     
     results = db.execute(query, (userId,)).fetchall()
 
-    print("hey")
     movies = [Movie(r[1], r[2], r[3], r[4], r[5], r[6]) for r in results]
 
     return movies

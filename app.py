@@ -1,7 +1,12 @@
+from distutils.log import Log
+from functools import wraps
+from genericpath import exists
 from matplotlib.style import use
 import requests
-from flask import Flask, redirect, render_template, request, url_for
-from forms import MovieSearch, MusicSearch, BookSearch
+from flask import Flask, redirect, render_template, request, session, url_for, g
+from flask_session import Session
+from werkzeug.security import generate_password_hash, check_password_hash
+from forms import MovieSearch, MusicSearch, BookSearch, LoginForm, RegisterForm
 
 from database import get_db, close_db
 from entities import Movie, Song, Book, fixMissingBook, json2Book, json2Movie, json2Song
@@ -9,17 +14,80 @@ import databaseManager as dbm #here we store the functions for inserting and del
 
 
 app=Flask(__name__)
+app.teardown_appcontext(close_db)
 app.config["SECRET_KEY"] = "secret-keyy"
+app.config["SESSION_PERMANENT"]=False
+app.config["SESSION_TYPE"]="filesystem"
+Session(app)
 
 #tmdb api key
 TMDB_APIEKY = "bf3d84686c3cb07442af95ea036a10e6"
 
+@app.before_request
+def load_logged_in_user():
+    g.user = session.get("userId", None)
+    g.username = session.get("username", None)
+
+def loginRequired(view):
+    @wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            return redirect(url_for("login", next=request.url))
+        return view(**kwargs)
+    return wrapped_view
+
+
 @app.route("/")
 def home():
-    return "Hello, please go to url"
+    return redirect(url_for("login"))
 
+@app.route("/register", methods=["GET", "POST"])
+
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        db = get_db()
+        query = """ SELECT * FROM users WHERE username = ? """
+        exists = db.execute(query, (username,)).fetchone()
+        if exists is not None:
+            form.username.errors.append("username already taken")
+        else:
+            db.execute(""" INSERT INTO users (username, password) VALUES (?,?); """, (username, generate_password_hash(password)))
+            db.commit()
+            return redirect(url_for("login"))
+    return render_template("register.html", form=form)
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        db = get_db()
+        query = """ SELECT * FROM users WHERE username = ? """
+        exists = db.execute(query, (username,)).fetchone()
+        if exists is None:
+            form.username.errors.append("username doesnt exist")
+        else:
+            session.clear()
+            session["username"] = username
+            session["userId"] = exists[0]
+            print(session["userId"])
+            next_page = request.args.get("next")
+
+            return redirect(url_for("collections"))
+
+    return render_template("login.html", form=form)
+
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 @app.route("/movies", methods=["GET", "POST"])
+@loginRequired
 def searchMovies():
     #list of found search results
     listMovies = []
@@ -42,6 +110,7 @@ def searchMovies():
     return render_template("movieSelection.html", form=form, listMovies=listMovies)
 
 @app.route("/music", methods=["GET", "POST"])
+@loginRequired
 def searchMusic():
     #list of found search results
     trackList = []
@@ -61,6 +130,7 @@ def searchMusic():
 
 
 @app.route("/books", methods=["GET", "POST"])
+@loginRequired
 def searchBooks():
     #list of found search results
     resList = []
@@ -80,66 +150,74 @@ def searchBooks():
 
 #save movies to database
 @app.route("/addMovie/<movieId>", methods=["GET", "POST"])
+@loginRequired
 def addMovie(movieId, userId=1):
     url = f"https://api.themoviedb.org/3/movie/{movieId}"
     paramDict = {"api_key": TMDB_APIEKY, "language":"en-US"}
     movieReq = requests.get(url, params=paramDict).json()
 
     #make object
-    movie = json2Movie(movieReq) #get correct from html
+    movie = json2Movie(movieReq) #convert json 2 object
     print(movie.original_title)
-    dbm.add_movie(movie=movie, userId=userId)
+    dbm.add_movie(movie=movie, userId=session["userId"])
     
     return redirect(url_for("collections"))
 
 #delete movie
 @app.route("/removeMovie/<movieId>", methods=["GET", "POST"])
+@loginRequired
 def removeMovie(movieId, userId=1):
-    dbm.remove_movie(movieId=movieId, userId=userId)
+    dbm.remove_movie(movieId=movieId, userId=session["userId"])
     return redirect(url_for("collections"))
 
 #save song
 @app.route("/addSong/<songId>", methods=["GET", "POST"])
+@loginRequired
 def addSong(songId, userId=1):
     url = f"https://api.deezer.com/track/{songId}"
     req = requests.get(url).json()
 
     #make object
-    song = json2Song(req) #get correct from json
+    song = json2Song(req) #convert json 2 object
 
-    dbm.add_song(song=song, userId=userId)
+    dbm.add_song(song=song, userId=session["userId"])
     
     return redirect(url_for("collections"))
 
 #delete song
 @app.route("/removeSong/<songId>", methods=["GET", "POST"])
+@loginRequired
 def removeSong(songId, userId=1):
-    dbm.remove_song(songId=songId, userId=userId)
+    dbm.remove_song(songId=songId, userId=session["userId"])
     return redirect(url_for("collections"))
 
 #ssve book
 @app.route("/addBook/<bookId>", methods=["GET", "POST"])
+@loginRequired
 def addBook(bookId, userId=1):
     url=f'https://www.googleapis.com/books/v1/volumes/{bookId}'
     req = requests.get(url)
     r = req.json()
 
     #make object
-    book = json2Book(r) #get correct from json
-    dbm.add_book(book=book, userId=userId)
+    book = json2Book(r) #convert json 2 object
+    dbm.add_book(book=book, userId=session["userId"])
     
     return redirect(url_for("collections"))
 
 #delete book
 @app.route("/removeBook/<bookId>", methods=["GET", "POST"])
+@loginRequired
 def removeBook(bookId, userId=1):
-    dbm.remove_book(bookId=bookId, userId=userId)
+    dbm.remove_book(bookId=bookId, userId=session["userId"])
     return redirect(url_for("collections"))
 
 #show the users collection
 @app.route("/collections", methods=["GET", "POST"])
+@loginRequired
 def collections():
-    listMovies = dbm.get_movies(userId=1)
-    trackList = dbm.get_songs(userId=1)
-    bookList = dbm.get_books(userId=1)
+    userId = session["userId"]
+    listMovies = dbm.get_movies(userId=userId)
+    trackList = dbm.get_songs(userId=userId)
+    bookList = dbm.get_books(userId=userId)
     return render_template("collections.html", listMovies=listMovies, trackList=trackList, bookList=bookList)

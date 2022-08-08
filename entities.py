@@ -1,5 +1,4 @@
-from matplotlib.style import use
-from database import get_db, close_db   
+
 
 #this is where we store our classes to keep things organized
 	

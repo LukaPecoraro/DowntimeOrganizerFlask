@@ -1,7 +1,6 @@
 from distutils.log import Log
 from functools import wraps
-from genericpath import exists
-from matplotlib.style import use
+
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for, g
 from flask_session import Session
